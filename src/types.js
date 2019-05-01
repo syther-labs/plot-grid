@@ -4,17 +4,8 @@
  * @module plot-grid/src/types
  */
 
-const scale = require('mumath/scale');
-const lg = require('mumath/log10');
-const closest = require('mumath/closest');
-const pad = require('left-pad');
-const range = require('just-range');
-const almost = require('almost-equal');
-const clamp = require('mumath/clamp');
-const isMultiple = require('mumath/is-multiple');
 const alpha = require('color-alpha');
-
-
+import { pad, range, almost, scale, clamp, isMultiple, lg} from './mumath';
 
 let linear = {
 	steps: [1,2,5],
@@ -72,8 +63,7 @@ let linear = {
 	}
 };
 
-
-let	log = {
+let	logarithmic = {
 	scale: 0.002,
 	offset: 0,
 	distance: 13,
@@ -262,9 +252,6 @@ let	log = {
 };
 
 
-
-
-
 let time = {
 	lines: false,
 	ticks: (state) => {
@@ -380,16 +367,11 @@ function getTimeSteps (minStep) {
 			bigStep = minute*240;
 		}
 	}
-
 	return [step, bigStep];
 }
 
-
-
-
-
-module.exports = {
-	linear: linear,
-	logarithmic: log,
-	time: time
+export default {
+	linear,
+	logarithmic,
+	time
 };

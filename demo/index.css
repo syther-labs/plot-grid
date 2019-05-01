@@ -1,3 +1,34 @@
+
+body {
+	margin: 0;
+	padding: 0;
+}
+.toolbar {
+	width: 100%;
+	height: 100px;
+	background: lightblue;
+}
+.context {
+	width: 100%;
+	height: calc(100% - 100px);
+}
+
+.context .sidebar {
+	width: 300px;
+	height: 100%;
+	float: left;
+	background: lightcyan
+}
+.context .frame {
+	display: block;
+	overflow: hidden;
+	height: 100%;
+	min-height: 100%;
+	width: auto;
+	position: relative;
+}
+
+	
 :host {
 	position: relative;
 }
@@ -93,8 +124,6 @@
 	top: 50%;
 	border-radius: 50vw;
 	box-shadow: inset 0 0 0 1px;
-}
-.grid-line-r.grid-line-min {
 }
 
 /* angular lines */
