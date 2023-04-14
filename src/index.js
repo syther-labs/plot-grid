@@ -1,13 +1,11 @@
-import GlGrid from "./gl";
-import Canvas2DGrid from "./2d";
+import { GlGrid } from "./GlGrid";
+import { Canvas2DGrid } from "./Canvas2DGrid";
 
-class Grid {
+export default class Grid {
   constructor(options) {
     if(options.gl) {
       return new GlGrid(options);
     }
     return new Canvas2DGrid(options);
   }
-}
-
-export default Grid;
+};

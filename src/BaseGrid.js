@@ -13,10 +13,9 @@ import { clamp, parseUnit, toPx, isObj } from './mumath';
 import types from './types';
 
 //constructor
-class Grid extends Emitter{
+export class BaseGrid extends Emitter{
 	constructor(opts) {
 		super(opts);
-		if (!(this instanceof Grid)) return new Grid(opts);
 		this.types = types;
 		//create rendering state
 		this.state = {};
@@ -282,7 +281,7 @@ class Grid extends Emitter{
 	}
 
 	setDefaults() {
-		this.pixelRatio = window.devicePixelRatio;
+		this.pixelRatio = 1;
 		this.autostart = true;
 		this.interactions = true;
 
@@ -388,5 +387,3 @@ class Grid extends Emitter{
 		});
 	}
 }
-
-export default Grid;

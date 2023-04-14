@@ -6,14 +6,14 @@
 'use strict';
 
 
-import Grid from './core';
+import { BaseGrid } from './BaseGrid';
 import {clamp, len, almost} from './mumath';
 const rgba = require('color-rgba')
 const attr = require('gl-util/attribute')
 const setProgram = require('gl-util/program')
 const uniform = require('gl-util/uniform')
 
-class GlGrid extends Grid {
+export class GlGrid extends BaseGrid {
 	constructor(opts) {
 		super(opts);
 		opts = opts || {};
@@ -213,5 +213,3 @@ GlGrid.prototype.frag = `
 		gl_FragColor = color;
 	}
 `;
-
-export default GlGrid;

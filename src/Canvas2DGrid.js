@@ -5,10 +5,10 @@
  */
 'use strict';
 
-import Grid from './core';
+import { BaseGrid } from './BaseGrid';
 import {almost, len, clamp} from './mumath';
 
-class Canvas2DGrid extends Grid {
+export class Canvas2DGrid extends BaseGrid {
 	constructor(opts) {
 		
 		opts = opts || {};
@@ -149,5 +149,3 @@ class Canvas2DGrid extends Grid {
 		}
 	}
 }
-
-export default Canvas2DGrid;
