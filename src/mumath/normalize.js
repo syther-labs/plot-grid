@@ -5,7 +5,7 @@
  */
 'use strict';
 
-var almost = require('almost-equal');
+var almost = require('./almost');
 
 module.exports = function(value, eps) {
 	//ignore ints

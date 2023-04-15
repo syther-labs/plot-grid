@@ -7,7 +7,7 @@
 'use strict';
 
 var precision = require('./precision');
-var almost = require('almost-equal');
+var almost = require('almost');
 var normalize = require('./normalize');
 
 module.exports = function (v, prec) {

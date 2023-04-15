@@ -24,7 +24,7 @@ let grid = createGrid({
 //2. dictaphone grid
 let dictaphone = createGrid({
 	x: {
-		name: 'Time'
+		name: 'Time',
 		units: 's',
 		min: 0,
 		max: 5*60,
@@ -61,7 +61,7 @@ let dictaphone = createGrid({
 //3. θmath
 let thetaMath = createGrid({
 	x: {
-		name: 'Gentle lines'
+		name: 'Gentle lines',
 		//defaults
 		min: -Infinity,
 		max: +Infinity,
@@ -86,7 +86,6 @@ let thetaMath = createGrid({
 		axis: 0,
 		axisColor: 'black'
 	},
-	y: //same as x
 });
 
 
@@ -99,7 +98,6 @@ let multiGrid = createGrid({
 		axis: 'top'
 	}, {
 		name: 'bottom axis',
-		labels: {1.2: 'x', 2.4: 'y', 3.6: 'z', ...},
 	}],
 	padding: 40
 });

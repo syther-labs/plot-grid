@@ -7,5 +7,5 @@ window.grid = new Grid({
   'container' : frame,
   minZoom:0.01,
   maxZoom:10,
-  gl: true,
+  // gl: true,
 });

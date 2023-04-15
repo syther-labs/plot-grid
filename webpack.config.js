@@ -5,15 +5,20 @@ module.exports = {
   watch:true,
   entry:'./demo/index.js',
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
+    // contentBase: path.join(__dirname, 'dist'),
     port: 3300,
     host:'0.0.0.0',
     open: true,
-    overlay: true
+    // overlay: true
 
   },
   module: {
     rules: [
+      {
+        test: /\.ts|\.tsx$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
       {
         test: /\.js$/,
         exclude: /node_modules/,
@@ -26,6 +31,9 @@ module.exports = {
         use:['style-loader','css-loader']
       }
     ]
+  },
+  resolve: {
+    extensions: ['.ts', '.js'],
   },
   optimization:{
     splitChunks:{

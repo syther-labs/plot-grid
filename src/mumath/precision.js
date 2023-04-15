@@ -12,7 +12,7 @@
  */
 'use strict';
 
-var almost = require('almost-equal');
+var almost = require('./almost');
 var norm = require('./normalize');
 
 module.exports = function (n, eps) {
