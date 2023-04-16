@@ -486,7 +486,7 @@ export class BaseGrid extends Emitter {
   }
 }
 
-class Coordinate {
+class XCoordinate {
   orientation: 'x';
   getCoords(values, state) {
     let coords = [] as number[];
@@ -508,5 +508,29 @@ class Coordinate {
 
   getRatio(value, state) {
     return (value - state.offset) / state.range
+  }
+}
+
+class YCoordinate {
+  orientation: 'y';
+  getCoords(values, state) {
+    let coords = [] as number[];
+    if (!values) return coords;
+    for (let i = 0; i < values.length; i++) {
+      let t = state.coordinate.getRatio(values[i], state);
+      coords.push(0);
+      coords.push(t);
+      coords.push(1);
+      coords.push(t);
+    }
+    return coords;
+  }
+
+  getRange(state) {
+    return state.shape[1] * state.coordinate.scale;
+  }
+
+  getRatio(value, state) {
+    return 1 - (value - state.offset) / state.range
   }
 }
