@@ -10,11 +10,11 @@ import Emitter from 'events';
 import getContext from 'gl-util/context';
 import panzoom from './panzoom';
 import { clamp, parseUnit, toPx, isObj } from './mumath';
-import types from './types';
+import types, { AxisScaling, LinearScaling } from './types';
 
-type AxisState = {
+export type AxisState = {
   opposite?: any;
-  offset?: number;
+  offset: number;
   scale?: any;
   axisColor?: any;
   axisWidth?: any;
@@ -22,16 +22,17 @@ type AxisState = {
   tickAlign?: any;
   labelColor?: any;
   color?: any;
-  padding?: any[];
+  padding?: number[];
+  step?: number;
   fontSize?: any;
   fontFamily?: any;
   lines?: any;
   lineColors?: any;
   ticks?: any;
   labels?: any;
-  range?: number;
+  range: number;
   shape: any;
-  coordinate: number[];
+  coordinate: BaseCoordinate;
   grid: BaseGrid
 }
 
@@ -81,7 +82,7 @@ export class BaseGrid extends Emitter {
   container: any;
   context: any;
   x: any;
-  y: any;
+  y: YCoordinate;
   r: any;
   a: any;
   loop: any;
@@ -139,19 +140,18 @@ export class BaseGrid extends Emitter {
       this.container.appendChild(this.canvas);
     }
     this.canvas.classList.add('plot-grid-canvas');
-    //set default coords as xy
-    if (opts.r == null && opts.a == null && opts.y == null && opts.x == null) {
-      opts.x = true;
-      opts.y = true;
-    }
 
     this.setDefaults();
 
     //create x/y/r
-    this.x = Object.assign({ disabled: true }, this.x, opts.x);
-    this.y = Object.assign({ disabled: true }, this.y, opts.y);
-    this.r = Object.assign({ disabled: true }, this.r, opts.r);
-    this.a = Object.assign({ disabled: true }, this.a, opts.a);
+    // this.x = Object.assign({ disabled: true }, this.x, opts.x);
+    this.x = new XCoordinate({ disabled: true, });
+    this.y = new YCoordinate({ disabled: true, });
+    this.r = new XCoordinate({ disabled: true, });
+    this.a = new YCoordinate({ disabled: true, });
+
+    // this.r = Object.assign({ disabled: true }, this.r, opts.r);
+    // this.a = Object.assign({ disabled: true }, this.a, opts.a);
     //enable proper lines
     if (opts.x !== undefined)
       this.x.disabled = !opts.x;
@@ -269,11 +269,13 @@ export class BaseGrid extends Emitter {
     return this;
   }
   //get state object with calculated params, ready for rendering
-  calcCoordinate(coord, shape: readonly [x: number, y: number]): AxisState {
+  calcCoordinate(coord: BaseCoordinate, shape: readonly [x: number, y: number]): AxisState {
     let state: AxisState = {
       coordinate: coord,
       shape: shape,
-      grid: this
+      grid: this,
+      offset: 0,
+      range: 0
     };
     //calculate real offset/range
     state.range = coord.getRange(state);
@@ -325,56 +327,33 @@ export class BaseGrid extends Emitter {
       state.lineColors = Array(lines.length).fill(color);
     }
     //calc ticks
-    let ticks;
-    if (coord.ticks instanceof Function) {
-      ticks = coord.ticks(state);
-    }
-    else if (Array.isArray(coord.ticks)) {
-      ticks = coord.ticks;
-    }
-    else {
-      let tick = (coord.ticks === true || coord.ticks === true) ? state.axisWidth * 2 : coord.ticks || 0;
-      ticks = Array(lines.length).fill(tick);
-    }
-    state.ticks = ticks;
+    state.ticks = coord.scaling.ticks(state);
     //calc labels
-    let labels;
-    if (coord.labels instanceof Function) {
-      labels = coord.labels(state);
-    }
-    else if (Array.isArray(coord.labels)) {
-      labels = coord.labels;
-    }
-    else if (isObj(coord.labels)) {
-      labels = coord.labels;
-    }
-    else {
-      labels = Array(state.lines.length).fill(null);
-    }
-    state.labels = labels;
-    //convert hashmap ticks/labels to lines + colors
-    if (isObj(ticks)) {
-      state.ticks = Array(lines.length).fill(0);
-    }
-    if (isObj(labels)) {
-      state.labels = Array(lines.length).fill(null);
-    }
-    if (isObj(ticks)) {
-      for (let value in ticks) {
-        state.ticks.push(ticks[value]);
-        state.lines.push(parseFloat(value));
-        state.lineColors.push(null);
-        state.labels.push(null);
-      }
-    }
-    if (isObj(labels)) {
-      for (let value in labels) {
-        state.labels.push(labels[value]);
-        state.lines.push(parseFloat(value));
-        state.lineColors.push(null);
-        state.ticks.push(null);
-      }
-    }
+    state.labels = coord.scaling.labels(state);
+
+    // //convert hashmap ticks/labels to lines + colors
+    // if (isObj(ticks)) {
+    //   state.ticks = Array(lines.length).fill(0);
+    // }
+    // if (isObj(labels)) {
+    //   state.labels = Array(lines.length).fill(null);
+    // }
+    // if (isObj(ticks)) {
+    //   for (let value in ticks) {
+    //     state.ticks.push(ticks[value]);
+    //     state.lines.push(parseFloat(value));
+    //     state.lineColors.push(null);
+    //     state.labels.push(null);
+    //   }
+    // }
+    // if (isObj(labels)) {
+    //   for (let value in labels) {
+    //     state.labels.push(labels[value]);
+    //     state.lines.push(parseFloat(value));
+    //     state.lineColors.push(null);
+    //     state.ticks.push(null);
+    //   }
+    // }
     return state;
   }
 
@@ -456,27 +435,7 @@ export class BaseGrid extends Emitter {
         return (value - state.offset) / state.range
       }
     });
-    this.y = Object.assign({}, this.defaults, {
-      orientation: 'y',
-      getCoords: (values, state) => {
-        let coords = [] as number[];
-        if (!values) return coords;
-        for (let i = 0; i < values.length; i++) {
-          let t = state.coordinate.getRatio(values[i], state);
-          coords.push(0);
-          coords.push(t);
-          coords.push(1);
-          coords.push(t);
-        }
-        return coords;
-      },
-      getRange: state => {
-        return state.shape[1] * state.coordinate.scale;
-      },
-      getRatio: (value, state) => {
-        return 1 - (value - state.offset) / state.range
-      }
-    });
+    this.y = new YCoordinate({});
     this.r = Object.assign({}, this.defaults, {
       orientation: 'r'
     });
@@ -486,7 +445,152 @@ export class BaseGrid extends Emitter {
   }
 }
 
-class XCoordinate {
+
+type CoordinateOption = {
+  disabled?: boolean;
+  type?: 'linear' | 'logarithmic';
+  name?: string;
+  units?: string;
+
+  //visible range params
+  minZoom?: number;
+  maxZoom?: number;
+  min?: number;
+  max?: number;
+  offset?: number;
+  origin?: number;
+  scale?: number;
+  steps?: number[];
+  minScale?: number;
+  maxScale?: number;
+  zoom?: boolean;
+  pan?: boolean;
+
+  //labels
+  labels?: boolean;
+  fontSize?: string;
+  fontFamily?: string;
+  padding?: number;
+  color?: string;
+
+  //lines params
+  lines?: boolean;
+  tick?: number;
+  tickAlign?: number;
+  lineWidth?: number;
+  distance?: number;
+  style?: string;
+  lineColor?: number;
+
+  //axis params
+  axis?: boolean;
+  axisOrigin?: number;
+  axisWidth?: number;
+  axisColor?: number;
+}
+
+abstract class BaseCoordinate {
+  disabled: boolean = false;
+  type: 'linear' | 'logarithmic' = 'linear';
+  name: string = '';
+  units: string = '';
+  steps?: number[];
+  scaling: AxisScaling;
+
+  //visible range params
+  minZoom: number = 0.01;
+  maxZoom: number = 10;
+  min: number = -Infinity;
+  max: number = Infinity;
+  offset: number = 0;
+  origin: number = .5;
+  scale: number = 1;
+  minScale: number = 1.19209290e-13;
+  maxScale: number = Number.MAX_VALUE || 1e100;
+  zoom: boolean = true;
+  pan: boolean = true;
+
+  //labels
+  labels: boolean = true;
+  fontSize: string = '11pt';
+  fontFamily: string = 'sans-serif';
+  padding: number | ((state: AxisState) => number[]) = 0;
+  color: string = 'rgb(0,0,0,1)';
+
+  //lines params
+  lines: boolean | ((state: AxisState) => boolean[]) = true;
+  tick: number = 8;
+  tickAlign: number = .5;
+  lineWidth: number = 1;
+  distance: number = 13;
+  style: string = 'lines';
+  lineColor: number | ((state: AxisState) => string[]) = .4;
+
+  //axis params
+  axis: boolean = true;
+  axisOrigin: number = 0;
+  axisWidth: number = 1.5;
+  axisColor: number = 0.8;
+
+  constructor(opts: CoordinateOption) {
+    if (opts.disabled) this.disabled = opts.disabled;
+    if (opts.type) this.type = opts.type;
+    if (opts.name) this.name = opts.name;
+    if (opts.units) this.units = opts.units;
+
+    //visible range params
+    if (opts.minZoom) this.minZoom = opts.minZoom;
+    if (opts.maxZoom) this.maxZoom = opts.maxZoom;
+    if (opts.min) this.min = opts.min;
+    if (opts.max) this.max = opts.max;
+    if (opts.offset) this.offset = opts.offset;
+    if (opts.origin) this.origin = opts.origin;
+    if (opts.scale) this.scale = opts.scale;
+    if (opts.minScale) this.minScale = opts.minScale;
+    if (opts.maxScale) this.maxScale = opts.maxScale;
+    if (opts.zoom) this.zoom = opts.zoom;
+    if (opts.pan) this.pan = opts.pan;
+
+    //labels
+    if (opts.labels) this.labels = opts.labels;
+    if (opts.fontSize) this.fontSize = opts.fontSize;
+    if (opts.fontFamily) this.fontFamily = opts.fontFamily;
+    if (opts.padding) this.padding = opts.padding;
+    if (opts.color) this.color = opts.color;
+
+    //lines params
+    if (opts.lines) this.lines = opts.lines;
+    if (opts.tick) this.tick = opts.tick;
+    if (opts.tickAlign) this.tickAlign = opts.tickAlign;
+    if (opts.lineWidth) this.lineWidth = opts.lineWidth;
+    if (opts.distance) this.distance = opts.distance;
+    if (opts.style) this.style = opts.style;
+    if (opts.lineColor) this.lineColor = opts.lineColor;
+
+    //axis params
+    if (opts.axis) this.axis = opts.axis;
+    if (opts.axisOrigin) this.axisOrigin = opts.axisOrigin;
+    if (opts.axisWidth) this.axisWidth = opts.axisWidth;
+    if (opts.axisColor) this.axisColor = opts.axisColor;
+  }
+
+  abstract getRange(state: AxisState): number;
+
+  getCoords(values: number[], state: AxisState) {
+    return [0, 0, 0, 0]
+  }
+
+  getRatio(value: number, state: AxisState) {
+    return 0;
+  }
+
+  format(v: number) {
+    return v
+  }
+}
+
+class XCoordinate extends BaseCoordinate {
+  scaling: AxisScaling = new LinearScaling();
   orientation: 'x';
   getCoords(values, state) {
     let coords = [] as number[];
@@ -511,8 +615,13 @@ class XCoordinate {
   }
 }
 
-class YCoordinate {
+class YCoordinate extends BaseCoordinate {
   orientation: 'y';
+
+  constructor(opts: CoordinateOption) {
+    super(opts)
+  }
+
   getCoords(values, state) {
     let coords = [] as number[];
     if (!values) return coords;

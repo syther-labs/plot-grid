@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   watch:true,
   entry:'./demo/index.js',
+  devtool: 'inline-source-map',
   devServer: {
     // contentBase: path.join(__dirname, 'dist'),
     port: 3300,
